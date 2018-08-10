@@ -13,6 +13,14 @@ intellij {
     plugins = ['Kotlin','properties']
 }
 
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'no.tornado:tornadofx:1.7.16'
+}
+
 publishPlugin {
     username publishUsername
     password publishPassword

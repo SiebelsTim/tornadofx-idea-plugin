@@ -17,7 +17,7 @@ import javafx.application.Platform
 
 class FxNode(nodeName: String, ktElement: KtElement, children: ObservableList<FxNode>? = null) {
 
-    val nodeNameProperty = SimpleStringProperty(nodeName)
+    val nodeNameProperty = SimpleStringProperty(nodeName.split(".").last())
     var nodeName by nodeNameProperty
 
     val ktElementProperty = SimpleObjectProperty<KtElement>(ktElement)
@@ -34,6 +34,9 @@ class FxNode(nodeName: String, ktElement: KtElement, children: ObservableList<Fx
         set(children) {
             childrenProperty.value = children
         }
+
+    val classNameProperty = SimpleStringProperty(nodeName)
+    val className by classNameProperty
 }
 
 class HierarchyModel : ViewModel() {
@@ -119,7 +122,7 @@ class NodeController : Controller() {
         if (receiver == "EventTarget") {
             val type1 = descriptor.returnType;
             val i = type1?.getJetTypeFqName(false)
-            return i?.split(".")?.last()
+            return i
         }
         return null
     }

@@ -16,8 +16,11 @@ import com.intellij.psi.PsiTreeChangeListener
 import com.intellij.psi.util.PsiTreeUtil
 import javafx.application.Platform
 import javafx.embed.swing.JFXPanel
+import javafx.event.EventTarget
+import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.scene.control.TreeItem
+import javafx.scene.layout.StackPane
 import org.jetbrains.kotlin.idea.refactoring.toPsiFile
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
@@ -69,7 +72,10 @@ class ViewEditor(val project: Project, val myFile: VirtualFile) : FileEditor {
 
     private fun updateHirachy() {
         val rootProperty = rootPropertyOrNull()
-        rootProperty?.let { hierarchyModel.computeNodeHirchay(it) }
+        rootProperty?.let {
+            hierarchyModel.computeNodeHirchay(it)
+            find(ViewBuilder::class).updatePreview()
+        }
     }
 
     private fun rootPropertyOrNull(): KtProperty? {
@@ -146,7 +152,9 @@ class ViewEditor(val project: Project, val myFile: VirtualFile) : FileEditor {
 }
 
 class ViewBuilder: View() {
-    val hirachyModel: HierarchyModel by inject()
+    val hierarchyModel: HierarchyModel by inject()
+
+    var preview: StackPane? = null
 
     override val root = borderpane {
         left {
@@ -161,7 +169,7 @@ class ViewBuilder: View() {
                     isShowRoot = false
                     cellFormat { text = it.nodeName }
 
-                    hirachyModel.fxNodeProperty.onChange {
+                    hierarchyModel.fxNodeProperty.onChange {
                         if (it != null) {
                             // Set-up root
                             root = TreeItem(it)
@@ -182,7 +190,7 @@ class ViewBuilder: View() {
         }
         center {
             stackpane {
-
+                preview = this
             }
         }
         right {
@@ -196,6 +204,27 @@ class ViewBuilder: View() {
                     fold("Layout: Button") { }
                 }
             }
+        }
+    }
+
+    fun updatePreview() {
+        preview?.apply {
+            clear()
+            add(hierarchyModel.fxNode)
+        }
+    }
+
+    fun EventTarget.add(node: FxNode) {
+        val target: EventTarget = try {
+            val clazz = Class.forName(node.className).newInstance() as Node
+            // TODO: set appropriate properties.
+            this.add(clazz)
+            clazz
+        } catch (e: ClassNotFoundException) {
+            this
+        }
+        for (child in node.children) {
+            target.add(child)
         }
     }
 }
